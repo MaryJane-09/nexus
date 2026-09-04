@@ -2,7 +2,6 @@ package register
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -13,7 +12,7 @@ type Register struct {
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	if  r.Method != http.MethodPost{
+	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -28,11 +27,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated) 
 	
+
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 }
