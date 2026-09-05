@@ -2,9 +2,7 @@ package validate
 
 import (
 	"errors"
-	"log"
 	"net/mail"
-	"strings"
 	"unicode"
 
 	"github.com/MaryJane-09/nexus/backend/internal/user"
@@ -29,11 +27,11 @@ func ValidateRegister(info user.User) error {
 		return errors.New("Email cannot be empty")
 	}
 	_, err := mail.ParseAddressList(info.Email)
-	if err != nil{
+	if err != nil {
 		return errors.New("Invalid email input")
 	}
 
-	if info.Password == ""{
+	if info.Password == "" {
 		return errors.New("Password cannot be empty")
 	}
 	if len(info.Password) < 8 {
