@@ -3,13 +3,10 @@ package register
 import (
 	"encoding/json"
 	"net/http"
+	"github.com/MaryJane-09/nexus/backend/internal/user"
+	"github.com/MaryJane-09/nexus/backend/internal/validate"
 )
 
-type Register struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -18,7 +15,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	var info = Register{}
+	var info = user.User{}
 
 	decoder := json.NewDecoder(r.Body)
 	w.Header().Set("Content-Type", "application/json")
@@ -27,11 +24,15 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}
-	
+	err = validate.ValidateRegister(info); 
+	if err != nil {
+		http.Error(w, "Invalid Request", http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
 }
