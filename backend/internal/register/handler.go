@@ -3,7 +3,6 @@ package register
 import (
 	"encoding/json"
 	"net/http"
-
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 	"github.com/MaryJane-09/nexus/backend/internal/validate"
 )

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Nexus server running on", config.ServerPort)
+	fmt.Println("Nexus server running on port", config.ServerPort)
 	server := router.New()
 	err := http.ListenAndServe(config.ServerPort, server)
 	if err != nil {
