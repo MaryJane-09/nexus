@@ -14,6 +14,7 @@ func New() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health.HealthHandler)
 	mux.HandleFunc("/register", register.RegisterHandler(repo))
+	mux.HandleFunc("/users", user.UsersHandler(repo))
 
 	return mux
 }

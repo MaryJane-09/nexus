@@ -1,33 +1,44 @@
 package user
 
-import "errors"
+import (
+	"errors"
+)
 
-type Repository struct{
+type Repository struct {
 	users map[string]User
 }
 
 func (r *Repository) Create(user User) error {
 
 	_, ok := r.users[user.Email]
-	if ok{
-		return  errors.New("This email already exists")
+	if ok {
+		return errors.New("this email already exists")
 	}
 
-    r.users[user.Email] = user
+	r.users[user.Email] = user
 
 	return nil
 }
 
-func NewRepository() *Repository{
+func NewRepository() *Repository {
 	return &Repository{
 		users: make(map[string]User),
 	}
 }
 
-func (r *Repository) FindByEmail(email string) (User, error){
+func (r *Repository) FindByEmail(email string) (User, error) {
 	foundUser, ok := r.users[email]
-	if ok{
-		return  foundUser, nil
+	if ok {
+		return foundUser, nil
 	}
 	return foundUser, errors.New("User not found")
+}
+
+func (r *Repository) GetAllUsers() []User {
+	var users []User
+
+	for _, allUsers := range r.users {
+		users = append(users, allUsers)
+	}
+	return users
 }
