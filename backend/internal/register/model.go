@@ -48,9 +48,9 @@ func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository) http.Ha
 			return
 		}
 		newOTP := otp.OTP{
-			Email:     "maryjane@gmail.com",
-			OtpCode:   code,
-			ExpiresAt: time.Now().Add(5 * time.Minute),
+			Email:     email.Email,
+			Code:   code,
+			ExpiresAt: time.Now().Add(otp.ExpiryTime),
 			Verified:  false,
 		}
 		otpRepo.Create(newOTP)

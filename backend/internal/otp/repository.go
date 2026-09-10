@@ -37,7 +37,7 @@ func (r *Repository) FindByEmail(email string) (OTP, error) {
 	return OTP{}, ErrNotFound
 }
 
-func (r *Repository) DeleteOTP(email string) {
+func (r *Repository) Delete(email string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	
