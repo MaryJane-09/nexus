@@ -2,8 +2,10 @@ package register
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-
+	"time"
+	"github.com/MaryJane-09/nexus/backend/internal/otp"
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 )
 
@@ -11,7 +13,7 @@ type EmailReg struct {
 	Email string `json:"email"`
 }
 
-func EmailRegHandler(repo *user.Repository) http.HandlerFunc {
+func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method != http.MethodPost {
@@ -29,13 +31,33 @@ func EmailRegHandler(repo *user.Repository) http.HandlerFunc {
 			return
 		}
 
-		_, err = repo.FindByEmail(email.Email)
+		_, err = userRepo.FindByEmail(email.Email)
 		if err == nil {
 			http.Error(w, "Email already exsist", http.StatusConflict)
-			return 
+			return
 		}
+
+		if !errors.Is(err, otp.ErrNotFound) {
+			http.Error(w, `{"error": "Database lookup failed"}`, http.StatusInternalServerError)
+			return
+		}
+
+		code, err := otp.Generate(8)
 		if err != nil {
-			//continue
+			http.Error(w, "Could not generate OTP", http.StatusInternalServerError)
+			return
 		}
+		newOTP := otp.OTP{
+			Email:     "maryjane@gmail.com",
+			OtpCode:   code,
+			ExpiresAt: time.Now().Add(5 * time.Minute),
+			Verified:  false,
+		}
+		otpRepo.Create(newOTP)
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "Verification code generated successfully",
+		})
 	}
 }
