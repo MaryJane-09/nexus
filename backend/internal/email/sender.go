@@ -20,7 +20,7 @@ func (s EmailSender) SendVerification(email string, code string) error {
 	headerSubject := "Subject: Your Verification Code\r\n"
 	headerMime := "MIME-version: 1.0;\r\nContent-Type: text/plain; charset=\"UTF-8\";\r\n"
 
-	body := fmt.Sprintf("\nHello,\n\nYour one-time verification code is: %s\n\nThis code will expire by %d. Do not share this code  with anyone.\n\nif you did not request for this please ignore", code, otp.ExpiryTime)
+	body := fmt.Sprintf("\nHello,\n\nYour one-time verification code is: %s\n\nThis code will expire in %d minutes. Do not share this code  with anyone.\n\nif you did not request for this please ignore", code, otp.Time)
 	messageBytes := []byte(headerFrom + headerTo + headerSubject + headerMime + body)
 
 	err := smtp.SendMail(s.SMTPHost+":"+

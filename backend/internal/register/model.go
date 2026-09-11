@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"time"
+
+	"github.com/MaryJane-09/nexus/backend/internal/email"
 	"github.com/MaryJane-09/nexus/backend/internal/otp"
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 )
@@ -12,8 +14,9 @@ import (
 type EmailReg struct {
 	Email string `json:"email"`
 }
+var ErrNotFound = errors.New("OTP was not found for this email")
 
-func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository) http.HandlerFunc {
+func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository, sender email.EmailSender) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method != http.MethodPost {
@@ -27,7 +30,7 @@ func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository) http.Ha
 		w.Header().Set("Content-Type", "application/json")
 		err := decoder.Decode(&email)
 		if err != nil {
-			http.Error(w, "Invalid Request", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -37,7 +40,7 @@ func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository) http.Ha
 			return
 		}
 
-		if !errors.Is(err, otp.ErrNotFound) {
+		if !errors.Is(err, ErrNotFound) {
 			http.Error(w, `{"error": "Database lookup failed"}`, http.StatusInternalServerError)
 			return
 		}
@@ -49,11 +52,22 @@ func EmailRegHandler(userRepo *user.Repository, otpRepo *otp.Repository) http.Ha
 		}
 		newOTP := otp.OTP{
 			Email:     email.Email,
-			Code:   code,
+			Code:      code,
 			ExpiresAt: time.Now().Add(otp.ExpiryTime),
 			Verified:  false,
 		}
-		otpRepo.Create(newOTP)
+		err = otpRepo.Create(newOTP)
+		if err != nil {
+			http.Error(w, "Could not create new OTP", http.StatusInternalServerError)
+			return
+		}
+
+		err = sender.SendVerification(email.Email, code)
+		if err != nil{
+			otpRepo.Delete(email.Email)
+			http.Error(w, "Email fail to send", http.StatusInternalServerError)
+			return
+		}
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{

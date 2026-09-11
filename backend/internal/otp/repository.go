@@ -5,7 +5,6 @@ import (
 	"sync"
 )
 
-var ErrNotFound = errors.New("OTP was not found for this email")
 
 type Repository struct {
 	mu   sync.RWMutex 
@@ -34,7 +33,7 @@ func (r *Repository) FindByEmail(email string) (OTP, error) {
 	if ok {
 		return foundEmail, nil
 	}
-	return OTP{}, ErrNotFound
+	return OTP{}, errors.New("OTP was not found for this email")
 }
 
 func (r *Repository) Delete(email string) {
