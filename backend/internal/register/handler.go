@@ -3,6 +3,7 @@ package register
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/MaryJane-09/nexus/backend/internal/email"
 	"github.com/MaryJane-09/nexus/backend/internal/otp"
@@ -10,39 +11,68 @@ import (
 	"github.com/MaryJane-09/nexus/backend/internal/validate"
 )
 
-func RegisterHandler(repo *user.Repository, otp *otp.Repository, sender *email.EmailSender) http.HandlerFunc {
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func RegisterHandler(repo *user.Repository, otpRepo *otp.Repository, sender *email.EmailSender) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "Method not allowed"})
 			return
 		}
 		defer r.Body.Close()
 
-		var info = user.User{}
-
+		var info user.User
 		decoder := json.NewDecoder(r.Body)
-		w.Header().Set("Content-Type", "application/json")
 		err := decoder.Decode(&info)
 		if err != nil {
-			http.Error(w, "Invalid Request", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to decode request body"})
 			return
 		}
+
 		err = validate.ValidateRegister(info)
 		if err != nil {
-			http.Error(w, "Invalid Request", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
 			return
 		}
-		err = repo.Create(info)
+
+		code, err := otp.Generate(8)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return 
-		}
-		w.WriteHeader(http.StatusCreated)
-
-		if err := json.NewEncoder(w).Encode(info); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Could not generate OTP"})
 			return
 		}
-	}
 
+		newOTP := otp.OTP{
+			Email:     info.Email,
+			Code:      code,
+			ExpiresAt: time.Now().Add(otp.ExpiryTime),
+			Verified:  false,
+		}
+
+		err = otpRepo.Create(newOTP)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Could not create new OTP"})
+			return
+		}
+
+		err = sender.SendVerification(info.Email, code)
+		if err != nil {
+			otpRepo.Delete(info.Email)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "Verification code generated successfully",
+		})
+	}
 }

@@ -2,9 +2,9 @@ package validate
 
 import (
 	"errors"
+	"github.com/MaryJane-09/nexus/backend/internal/user"
 	"net/mail"
 	"unicode"
-	"github.com/MaryJane-09/nexus/backend/internal/user"
 )
 
 func ValidateRegister(info user.User) error {

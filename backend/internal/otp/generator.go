@@ -5,7 +5,7 @@ import (
 	"math/big"
 )
 
-func Generate(length int) (string, error){
+func Generate(length int) (string, error) {
 
 	const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789"
 
@@ -14,7 +14,7 @@ func Generate(length int) (string, error){
 
 	for i := 0; i < length; i++ {
 		randomIdx, err := rand.Int(rand.Reader, charsetLen)
-		if err != nil{
+		if err != nil {
 			return "", err
 		}
 		otp[i] = charset[int(randomIdx.Int64())]

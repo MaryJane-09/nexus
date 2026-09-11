@@ -3,6 +3,7 @@ package email
 import (
 	"fmt"
 	"net/smtp"
+
 	"github.com/MaryJane-09/nexus/backend/internal/otp"
 )
 

@@ -11,6 +11,8 @@ import (
 func main() {
 
 	fmt.Println("Nexus server running on port", config.AppConfig.ServerPort)
+	fmt.Println("Gmail address loaded:", config.AppConfig.GmailAddress != "")
+	fmt.Println("App password loaded:", config.AppConfig.GmailAppPassword != "")
 	server := router.New()
 	err := http.ListenAndServe(config.AppConfig.ServerPort, server)
 	if err != nil {
