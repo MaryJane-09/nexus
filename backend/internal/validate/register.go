@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/mail"
 	"unicode"
-
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 )
 

@@ -3,7 +3,8 @@ package otp
 import (
 	"time"
 )
-const ExpiryTime = 5 * time.Minute
+const ExpiryTime = Time * time.Minute
+const Time = 5
 
 type OTP struct {
 	Email     string

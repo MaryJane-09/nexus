@@ -3,11 +3,14 @@ package register
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/MaryJane-09/nexus/backend/internal/email"
+	"github.com/MaryJane-09/nexus/backend/internal/otp"
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 	"github.com/MaryJane-09/nexus/backend/internal/validate"
 )
 
-func RegisterHandler(repo *user.Repository) http.HandlerFunc {
+func RegisterHandler(repo *user.Repository, otp *otp.Repository, sender *email.EmailSender) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
