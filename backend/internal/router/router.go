@@ -26,6 +26,6 @@ func New() *http.ServeMux {
 	mux.HandleFunc("/health", health.HealthHandler)
 	mux.HandleFunc("/register", register.RegisterHandler(repo, otpRepo, pendingRepo, &sender))
 	mux.HandleFunc("/users", user.UsersHandler(repo))
-
+	mux.HandleFunc("/verify-otp", register.VerifyOTPHandler(repo, otpRepo, pendingRepo))
 	return mux
 }

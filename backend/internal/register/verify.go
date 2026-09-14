@@ -51,6 +51,24 @@ func VerifyOTPHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pen
 			json.NewEncoder(w).Encode(ErrorResponse{Error: "Incorrect OTP. No match found"})
 			return
 		}
-	}
+		pendingUser, err := pendingRepo.FindByEmail(info.Email)
+		if err != nil{
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "User cannot be found"})
+			return
+		}
+		err = repo.Create(pendingUser)
+		if err != nil {
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to create user"})
+			return
+		}
+		otpRepo.Delete(info.Email)
+		pendingRepo.Delete(info.Email)
 
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "User created successfully",
+		})
+	}
 }

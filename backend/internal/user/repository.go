@@ -2,6 +2,8 @@ package user
 
 import (
 	"errors"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository struct {
@@ -14,6 +16,12 @@ func (r *UserRepository) Create(user User) error {
 	if ok {
 		return errors.New("this email already exists")
 	}
+	hash := []byte(user.Password)
+	hashed, err := bcrypt.GenerateFromPassword(hash, bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.Password = string(hashed)
 
 	r.users[user.Email] = user
 
@@ -34,11 +42,15 @@ func (r *UserRepository) FindByEmail(email string) (User, error) {
 	return foundUser, errors.New("User not found")
 }
 
-func (r *UserRepository) GetAllUsers() []User {
-	var users []User
+func (r *UserRepository) GetAllUsers() []UserResponse {
+	var users []UserResponse
 
 	for _, allUsers := range r.users {
-		users = append(users, allUsers)
+		something := UserResponse{
+			Name: allUsers.Name,
+			Email: allUsers.Email,
+		}
+		users = append(users, something)
 	}
 	return users
 }

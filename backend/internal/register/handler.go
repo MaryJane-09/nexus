@@ -72,7 +72,7 @@ func RegisterHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pend
 			return
 		}
 
-		err = sender.SendVerification(info.Email, code)
+		err = sender.SendVerification(info.Name, info.Email, code)
 		if err != nil {
 			otpRepo.Delete(info.Email)
 			pendingRepo.Delete(info.Email)

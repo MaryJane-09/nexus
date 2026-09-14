@@ -30,7 +30,7 @@ func ValidateRegister(info user.User) error {
 		return errors.New("Invalid email input")
 	}
 
-	if info.Password == "" {
+	if len(info.Password) ==  0{
 		return errors.New("Password cannot be empty")
 	}
 	if len(info.Password) < 8 {

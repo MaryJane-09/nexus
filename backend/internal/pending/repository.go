@@ -3,7 +3,6 @@ package pending
 import (
 	"errors"
 	"sync"
-
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 )
 
@@ -23,7 +22,7 @@ func (r *PendingRepository) Create(info user.User) error {
 	defer r.mu.Unlock()
 
 	r.users[info.Email] = info
-	return errors.New("Pending user failed to save")
+	return nil
 }
 
 func (r *PendingRepository) FindByEmail(email string) (user.User, error) {
