@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func UsersHandler(repo *Repository) http.HandlerFunc {
+func UsersHandler(repo *UserRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

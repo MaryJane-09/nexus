@@ -5,22 +5,22 @@ import (
 	"sync"
 )
 
-type Repository struct {
+type OTPRepository struct {
 	mu   sync.RWMutex
 	otps map[string]OTP
 }
 
-func (r *Repository) Generate(i int) (any, error) {
+func (r *OTPRepository) Generate(i int) (any, error) {
 	panic("unimplemented")
 }
 
-func NewRepository() *Repository {
-	return &Repository{
+func NewRepository() *OTPRepository {
+	return &OTPRepository{
 		otps: make(map[string]OTP),
 	}
 }
 
-func (r *Repository) Create(otp OTP) error {
+func (r *OTPRepository) Create(otp OTP) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -28,7 +28,7 @@ func (r *Repository) Create(otp OTP) error {
 	return nil
 }
 
-func (r *Repository) FindByEmail(email string) (OTP, error) {
+func (r *OTPRepository) FindByEmail(email string) (OTP, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -39,7 +39,7 @@ func (r *Repository) FindByEmail(email string) (OTP, error) {
 	return OTP{}, errors.New("OTP was not found for this email")
 }
 
-func (r *Repository) Delete(email string) {
+func (r *OTPRepository) Delete(email string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

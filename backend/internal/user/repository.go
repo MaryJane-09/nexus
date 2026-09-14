@@ -4,11 +4,11 @@ import (
 	"errors"
 )
 
-type Repository struct {
+type UserRepository struct {
 	users map[string]User
 }
 
-func (r *Repository) Create(user User) error {
+func (r *UserRepository) Create(user User) error {
 
 	_, ok := r.users[user.Email]
 	if ok {
@@ -20,13 +20,13 @@ func (r *Repository) Create(user User) error {
 	return nil
 }
 
-func NewRepository() *Repository {
-	return &Repository{
+func NewRepository() *UserRepository {
+	return &UserRepository{
 		users: make(map[string]User),
 	}
 }
 
-func (r *Repository) FindByEmail(email string) (User, error) {
+func (r *UserRepository) FindByEmail(email string) (User, error) {
 	foundUser, ok := r.users[email]
 	if ok {
 		return foundUser, nil
@@ -34,7 +34,7 @@ func (r *Repository) FindByEmail(email string) (User, error) {
 	return foundUser, errors.New("User not found")
 }
 
-func (r *Repository) GetAllUsers() []User {
+func (r *UserRepository) GetAllUsers() []User {
 	var users []User
 
 	for _, allUsers := range r.users {

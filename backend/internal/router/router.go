@@ -7,6 +7,7 @@ import (
 	"github.com/MaryJane-09/nexus/backend/internal/email"
 	"github.com/MaryJane-09/nexus/backend/internal/health"
 	"github.com/MaryJane-09/nexus/backend/internal/otp"
+	"github.com/MaryJane-09/nexus/backend/internal/pending"
 	"github.com/MaryJane-09/nexus/backend/internal/register"
 	"github.com/MaryJane-09/nexus/backend/internal/user"
 )
@@ -20,9 +21,10 @@ func New() *http.ServeMux {
 	}
 	repo := user.NewRepository()
 	otpRepo := otp.NewRepository()
+	pendingRepo := pending.NewRepository()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health.HealthHandler)
-	mux.HandleFunc("/register", register.RegisterHandler(repo, otpRepo, &sender))
+	mux.HandleFunc("/register", register.RegisterHandler(repo, otpRepo, pendingRepo, &sender))
 	mux.HandleFunc("/users", user.UsersHandler(repo))
 
 	return mux
