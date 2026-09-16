@@ -3,18 +3,20 @@ package user
 import (
 	"errors"
 
+	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository struct {
-	users map[string]User
+	id map[uuid.UUID]User
 }
 
 func (r *UserRepository) Create(user User) error {
 
-	_, ok := r.users[user.Email]
-	if ok {
-		return errors.New("this email already exists")
+	for _, value := range r.users {
+		if value.Email == user.Email {
+			return errors.New("this email already exists")
+		}
 	}
 	hash := []byte(user.Password)
 	hashed, err := bcrypt.GenerateFromPassword(hash, bcrypt.DefaultCost)
@@ -23,19 +25,25 @@ func (r *UserRepository) Create(user User) error {
 	}
 	user.Password = string(hashed)
 
-	r.users[user.Email] = user
+	id, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	user.Id = id
+
+	r.id[user.Id] = user
 
 	return nil
 }
 
 func NewRepository() *UserRepository {
 	return &UserRepository{
-		users: make(map[string]User),
+		id: make(map[uuid.UUID]User),
 	}
 }
 
-func (r *UserRepository) FindByEmail(email string) (User, error) {
-	foundUser, ok := r.users[email]
+func (r *UserRepository) FindByEmail(id uuid.UUID) (User, error) {
+	foundUser, ok := r.id[id]
 	if ok {
 		return foundUser, nil
 	}
@@ -45,9 +53,9 @@ func (r *UserRepository) FindByEmail(email string) (User, error) {
 func (r *UserRepository) GetAllUsers() []UserResponse {
 	var users []UserResponse
 
-	for _, allUsers := range r.users {
+	for _, allUsers := range r.id {
 		something := UserResponse{
-			Name: allUsers.Name,
+			Name:  allUsers.Name,
 			Email: allUsers.Email,
 		}
 		users = append(users, something)
