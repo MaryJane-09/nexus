@@ -10,9 +10,6 @@ type OTPRepository struct {
 	otps map[string]OTP
 }
 
-func (r *OTPRepository) Generate(i int) (any, error) {
-	panic("unimplemented")
-}
 
 func NewRepository() *OTPRepository {
 	return &OTPRepository{
