@@ -2,16 +2,19 @@ package user
 
 import (
 	"errors"
-
+	"sync"
 	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository struct {
+	mu    sync.RWMutex
 	users map[uuid.UUID]User
 }
 
 func (r *UserRepository) Create(user User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	for _, value := range r.users {
 		if value.Email == user.Email {
@@ -43,6 +46,9 @@ func NewRepository() *UserRepository {
 }
 
 func (r *UserRepository) FindByID(id uuid.UUID) (User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	foundUser, ok := r.users[id]
 	if ok {
 		return foundUser, nil
@@ -51,6 +57,9 @@ func (r *UserRepository) FindByID(id uuid.UUID) (User, error) {
 }
 
 func (r *UserRepository) FindByEmail(email string) (User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	for _, value := range r.users {
 		if value.Email == email {
 			return value, nil
@@ -60,6 +69,9 @@ func (r *UserRepository) FindByEmail(email string) (User, error) {
 }
 
 func (r *UserRepository) GetAllUsers() []UserResponse {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	var users []UserResponse
 
 	for _, allUsers := range r.users {
