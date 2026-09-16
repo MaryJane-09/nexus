@@ -8,7 +8,7 @@ import (
 )
 
 type UserRepository struct {
-	id map[uuid.UUID]User
+	users map[uuid.UUID]User
 }
 
 func (r *UserRepository) Create(user User) error {
@@ -31,29 +31,38 @@ func (r *UserRepository) Create(user User) error {
 	}
 	user.Id = id
 
-	r.id[user.Id] = user
+	r.users[user.Id] = user
 
 	return nil
 }
 
 func NewRepository() *UserRepository {
 	return &UserRepository{
-		id: make(map[uuid.UUID]User),
+		users: make(map[uuid.UUID]User),
 	}
 }
 
-func (r *UserRepository) FindByEmail(id uuid.UUID) (User, error) {
-	foundUser, ok := r.id[id]
+func (r *UserRepository) FindByID(id uuid.UUID) (User, error) {
+	foundUser, ok := r.users[id]
 	if ok {
 		return foundUser, nil
 	}
 	return foundUser, errors.New("User not found")
 }
 
+func (r *UserRepository) FindByEmail(email string) (User, error) {
+	for _, value := range r.users {
+		if value.Email == email {
+			return value, nil
+		}
+	}
+	return User{}, errors.New("User not found")
+}
+
 func (r *UserRepository) GetAllUsers() []UserResponse {
 	var users []UserResponse
 
-	for _, allUsers := range r.id {
+	for _, allUsers := range r.users {
 		something := UserResponse{
 			Name:  allUsers.Name,
 			Email: allUsers.Email,
