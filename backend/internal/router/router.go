@@ -10,16 +10,19 @@ import (
 	"github.com/MaryJane-09/nexus/backend/internal/pending"
 	"github.com/MaryJane-09/nexus/backend/internal/register"
 	"github.com/MaryJane-09/nexus/backend/internal/user"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func New() *http.ServeMux {
+
+func New(pool *pgxpool.Pool) *http.ServeMux {
+
 	sender := email.EmailSender{
 		GmailAddress:     config.AppConfig.GmailAddress,
 		GmailAppPassword: config.AppConfig.GmailAppPassword,
 		SMTPHost:         "smtp.gmail.com",
 		SMTPPort:         "587",
 	}
-	repo := user.NewRepository()
+	repo := user.NewRepository(pool)
 	otpRepo := otp.NewRepository()
 	pendingRepo := pending.NewRepository()
 	mux := http.NewServeMux()

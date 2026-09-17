@@ -3,13 +3,23 @@ package user
 import (
 	"errors"
 	"sync"
+
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository struct {
 	mu    sync.RWMutex
 	users map[uuid.UUID]User
+	pool  *pgxpool.Pool
+}
+
+func NewRepository(pool *pgxpool.Pool) *UserRepository {
+	return &UserRepository{
+		users: make(map[uuid.UUID]User),
+		pool: pool,
+	}
 }
 
 func (r *UserRepository) Create(user User) error {
@@ -39,11 +49,6 @@ func (r *UserRepository) Create(user User) error {
 	return nil
 }
 
-func NewRepository() *UserRepository {
-	return &UserRepository{
-		users: make(map[uuid.UUID]User),
-	}
-}
 
 func (r *UserRepository) FindByID(id uuid.UUID) (User, error) {
 	r.mu.RLock()
