@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -18,19 +19,12 @@ type UserRepository struct {
 func NewRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{
 		users: make(map[uuid.UUID]User),
-		pool: pool,
+		pool:  pool,
 	}
 }
 
 func (r *UserRepository) Create(user User) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	for _, value := range r.users {
-		if value.Email == user.Email {
-			return errors.New("this email already exists")
-		}
-	}
+	ctx := context.Background()
 	hash := []byte(user.Password)
 	hashed, err := bcrypt.GenerateFromPassword(hash, bcrypt.DefaultCost)
 	if err != nil {
@@ -44,11 +38,14 @@ func (r *UserRepository) Create(user User) error {
 	}
 	user.Id = id
 
-	r.users[user.Id] = user
+	_, err = r.pool.Exec(ctx, `INSERT INTO users (id, name, email, password)
+	VALUES ($1, $2, $3, $4)`, user.Id, user.Name, user.Email, user.Password)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
-
 
 func (r *UserRepository) FindByID(id uuid.UUID) (User, error) {
 	r.mu.RLock()

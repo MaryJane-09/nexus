@@ -2,7 +2,6 @@ package router
 
 import (
 	"net/http"
-
 	"github.com/MaryJane-09/nexus/backend/config"
 	"github.com/MaryJane-09/nexus/backend/internal/email"
 	"github.com/MaryJane-09/nexus/backend/internal/health"
