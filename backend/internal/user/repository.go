@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"errors"
-	"sync"
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,14 +10,11 @@ import (
 )
 
 type UserRepository struct {
-	mu    sync.RWMutex
-	users map[uuid.UUID]User
 	pool  *pgxpool.Pool
 }
 
 func NewRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{
-		users: make(map[uuid.UUID]User),
 		pool:  pool,
 	}
 }
@@ -88,7 +84,7 @@ func (r *UserRepository) GetAllUsers() []UserResponse {
 	for rows.Next() {
 		var u UserResponse
 		err = rows.Scan(&u.Name, &u.Email)
-		if err != nil{
+		if err != nil {
 			return users
 		}
 		users = append(users, u)
