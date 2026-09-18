@@ -3,11 +3,11 @@ package user
 import (
 	"context"
 	"errors"
-	"sync"
-
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
+	"sync"
 )
 
 type UserRepository struct {
@@ -41,9 +41,14 @@ func (r *UserRepository) Create(user User) error {
 	_, err = r.pool.Exec(ctx, `INSERT INTO users (id, name, email, password)
 	VALUES ($1, $2, $3, $4)`, user.Id, user.Name, user.Email, user.Password)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return errors.New("this email already exists")
+			}
+		}
 		return err
 	}
-
 	return nil
 }
 
