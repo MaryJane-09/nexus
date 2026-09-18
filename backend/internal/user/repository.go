@@ -3,11 +3,11 @@ package user
 import (
 	"context"
 	"errors"
+	"sync"
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
-	"sync"
 )
 
 type UserRepository struct {
@@ -53,40 +53,45 @@ func (r *UserRepository) Create(user User) error {
 }
 
 func (r *UserRepository) FindByID(id uuid.UUID) (User, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	foundUser, ok := r.users[id]
-	if ok {
-		return foundUser, nil
+	ctx := context.Background()
+	row := r.pool.QueryRow(ctx, `SELECT id, name, email, password FROM users WHERE id = $1`, id)
+	var u User
+	err := row.Scan(&u.Id, &u.Name, &u.Email, &u.Password)
+	if err != nil {
+		return User{}, errors.New("User not found")
 	}
-	return foundUser, errors.New("User not found")
+	return u, nil
 }
 
 func (r *UserRepository) FindByEmail(email string) (User, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
 
-	for _, value := range r.users {
-		if value.Email == email {
-			return value, nil
-		}
+	ctx := context.Background()
+	row := r.pool.QueryRow(ctx, `SELECT id, name, email, password FROM users WHERE email = $1`, email)
+	var u User
+	err := row.Scan(&u.Id, &u.Name, &u.Email, &u.Password)
+	if err != nil {
+		return User{}, errors.New("User not found")
 	}
-	return User{}, errors.New("User not found")
+	return u, nil
+
 }
 
 func (r *UserRepository) GetAllUsers() []UserResponse {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
+	ctx := context.Background()
+	rows, err := r.pool.Query(ctx, `SELECT name, email FROM users `)
+	if err != nil {
+		return []UserResponse{}
+	}
+	defer rows.Close()
 	var users []UserResponse
 
-	for _, allUsers := range r.users {
-		something := UserResponse{
-			Name:  allUsers.Name,
-			Email: allUsers.Email,
+	for rows.Next() {
+		var u UserResponse
+		err = rows.Scan(&u.Name, &u.Email)
+		if err != nil{
+			return users
 		}
-		users = append(users, something)
+		users = append(users, u)
 	}
 	return users
 }
