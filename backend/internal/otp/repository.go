@@ -1,44 +1,52 @@
 package otp
 
 import (
+	"context"
 	"errors"
-	"sync"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OTPRepository struct {
-	mu   sync.RWMutex
-	otps map[string]OTP
+	pool *pgxpool.Pool
 }
 
-
-func NewRepository() *OTPRepository {
+func NewRepository(pool *pgxpool.Pool) *OTPRepository {
 	return &OTPRepository{
-		otps: make(map[string]OTP),
+		pool: pool,
 	}
 }
 
 func (r *OTPRepository) Create(otp OTP) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	ctx := context.Background()
 
-	r.otps[otp.Email] = otp
+	_, err := r.pool.Exec(ctx, `INSERT INTO otps (email, code, expires_at, verified)
+	VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO UPDATE
+	SET code = $2, expires_at = $3, verified = $4;`, otp.Email, otp.Code, otp.ExpiresAt, otp.Verified)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (r *OTPRepository) FindByEmail(email string) (OTP, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
 
-	foundEmail, ok := r.otps[email]
-	if ok {
-		return foundEmail, nil
+	ctx := context.Background()
+	row := r.pool.QueryRow(ctx, `SELECT email, code, expires_at, verified FROM otps WHERE email = $1`, email)
+	var otp OTP
+	err := row.Scan(&otp.Email, &otp.Code, &otp.ExpiresAt, &otp.Verified)
+	if err != nil {
+		return OTP{}, errors.New("OTP not found")
 	}
-	return OTP{}, errors.New("OTP was not found for this email")
+	return otp, nil
+
 }
 
-func (r *OTPRepository) Delete(email string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (r *OTPRepository) Delete(email string) error {
+	ctx := context.Background()
 
-	delete(r.otps, email)
+	_, err := r.pool.Exec(ctx,`DELETE FROM otps WHERE email = $1`, email)
+	if err != nil {
+		return err
+	}
+	return nil
 }

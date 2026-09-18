@@ -22,7 +22,7 @@ func New(pool *pgxpool.Pool) *http.ServeMux {
 		SMTPPort:         "587",
 	}
 	repo := user.NewRepository(pool)
-	otpRepo := otp.NewRepository()
+	otpRepo := otp.NewRepository(pool)
 	pendingRepo := pending.NewRepository()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health.HealthHandler)

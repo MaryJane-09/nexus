@@ -74,7 +74,12 @@ func RegisterHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pend
 
 		err = sender.SendVerification(info.Name, info.Email, code)
 		if err != nil {
-			otpRepo.Delete(info.Email)
+			err = otpRepo.Delete(info.Email)
+			if err != nil {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete otp"})
+				return
+			}
 			pendingRepo.Delete(info.Email)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
