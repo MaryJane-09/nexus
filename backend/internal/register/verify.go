@@ -2,6 +2,7 @@ package register
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -63,11 +64,17 @@ func VerifyOTPHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pen
 			return
 		}
 		err = repo.Create(pendingUser)
-		if err != nil {
+		if err != nil{
+			if errors.Is(err, user.ErrEmailExists){
+				w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: user.ErrEmailExists.Error()})
+			return
+			}
 			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to create user"})
 			return
 		}
+
 		err = otpRepo.Delete(info.Email)
 		if err != nil {
 			w.WriteHeader(http.StatusConflict)
@@ -75,11 +82,11 @@ func VerifyOTPHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pen
 			return
 		}
 		err = pendingRepo.Delete(info.Email)
-			if err != nil {
-				w.WriteHeader(http.StatusConflict)
-				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete pending user"})
-				return
-			}
+		if err != nil {
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete pending user"})
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{

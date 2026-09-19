@@ -2,6 +2,7 @@ package register
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -45,6 +46,7 @@ func RegisterHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pend
 
 		err = pendingRepo.Create(info)
 		if err != nil {
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Pending user not saved"})
 			return

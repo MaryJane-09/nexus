@@ -18,6 +18,8 @@ func NewRepository(pool *pgxpool.Pool) *UserRepository {
 		pool:  pool,
 	}
 }
+var ErrEmailExists = errors.New("this email already exists")
+
 
 func (r *UserRepository) Create(user User) error {
 	ctx := context.Background()
@@ -40,7 +42,7 @@ func (r *UserRepository) Create(user User) error {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				return errors.New("this email already exists")
+				return ErrEmailExists
 			}
 		}
 		return err
