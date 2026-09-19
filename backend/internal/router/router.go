@@ -23,7 +23,7 @@ func New(pool *pgxpool.Pool) *http.ServeMux {
 	}
 	repo := user.NewRepository(pool)
 	otpRepo := otp.NewRepository(pool)
-	pendingRepo := pending.NewRepository()
+	pendingRepo := pending.NewRepository(pool)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health.HealthHandler)
 	mux.HandleFunc("/register", register.RegisterHandler(repo, otpRepo, pendingRepo, &sender))

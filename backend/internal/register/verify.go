@@ -74,7 +74,12 @@ func VerifyOTPHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pen
 			json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete otp"})
 			return
 		}
-		pendingRepo.Delete(info.Email)
+		err = pendingRepo.Delete(info.Email)
+			if err != nil {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete pending user"})
+				return
+			}
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{

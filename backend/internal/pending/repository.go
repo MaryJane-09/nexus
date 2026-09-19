@@ -1,45 +1,52 @@
 package pending
 
 import (
+	"context"
 	"errors"
-	"sync"
 	"github.com/MaryJane-09/nexus/backend/internal/user"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PendingRepository struct {
-	mu    sync.RWMutex
-	users map[string]user.User
+	pool *pgxpool.Pool
 }
 
-func NewRepository() *PendingRepository {
+func NewRepository(pool *pgxpool.Pool) *PendingRepository {
 	return &PendingRepository{
-		users: make(map[string]user.User),
+		pool: pool,
 	}
 }
 
 func (r *PendingRepository) Create(info user.User) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	ctx := context.Background()
 
-	r.users[info.Email] = info
+	_, err := r.pool.Exec(ctx, `INSERT INTO pendings (email, name, password)
+	VALUES ($1, $2, $3) ON CONFLICT (email) DO UPDATE
+	SET name = $2, password = $3;`, info.Email, info.Name, info.Password)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (r *PendingRepository) FindByEmail(email string) (user.User, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	foundEmail, ok := r.users[email]
-	if ok {
-		return foundEmail, nil
+	ctx := context.Background()
+	row := r.pool.QueryRow(ctx, `SELECT email, name, password FROM pendings WHERE email = $1`, email)
+	var p user.User
+	err := row.Scan(&p.Email, &p.Name, &p.Password)
+	if err != nil {
+		return user.User{}, errors.New("Pending user not found")
 	}
-	return user.User{}, errors.New("Pending user was not found")
+	return p, nil
+
 }
 
+func (r *PendingRepository) Delete(email string) error {
+	ctx := context.Background()
 
-func (r *PendingRepository) Delete(email string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	delete(r.users, email)
+	_, err := r.pool.Exec(ctx, `DELETE FROM pendings WHERE email = $1`, email)
+	if err != nil {
+		return err
+	}
+	return nil
 }

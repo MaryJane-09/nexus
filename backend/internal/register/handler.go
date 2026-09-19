@@ -51,7 +51,12 @@ func RegisterHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pend
 		}
 		code, err := otp.Generate(8)
 		if err != nil {
-			pendingRepo.Delete(info.Email)
+			err = pendingRepo.Delete(info.Email)
+			if err != nil {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete pending user"})
+				return
+			}
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Could not generate OTP"})
 			return
@@ -66,7 +71,12 @@ func RegisterHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pend
 
 		err = otpRepo.Create(NewOTP)
 		if err != nil {
-			pendingRepo.Delete(info.Email)
+			err = pendingRepo.Delete(info.Email)
+			if err != nil {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete pending user"})
+				return
+			}
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Could not create new OTP"})
 			return
@@ -80,7 +90,12 @@ func RegisterHandler(repo *user.UserRepository, otpRepo *otp.OTPRepository, pend
 				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete otp"})
 				return
 			}
-			pendingRepo.Delete(info.Email)
+			err = pendingRepo.Delete(info.Email)
+			if err != nil {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to delete pending user"})
+				return
+			}
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
 			return
